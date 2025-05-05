@@ -59,12 +59,15 @@ MODELS = [
     'Salesforce/blip2-flan-t5-xxl',
     'microsoft/kosmos-2-patch14-224'
 ]
-if Xcomposer:
-  MODELS.extend([
-    'internlm/internlm-xcomposer2-vl-7b-4bit',
-    'internlm/internlm-xcomposer2-vl-7b',
-    'internlm/internlm-xcomposer2-vl-1_8b',
-    'internlm/internlm-xcomposer2-4khd-7b',])
+try:
+    if Xcomposer:
+        MODELS.extend([
+            'internlm/internlm-xcomposer2-vl-7b-4bit',
+            'internlm/internlm-xcomposer2-vl-7b',
+            'internlm/internlm-xcomposer2-vl-1_8b',
+            'internlm/internlm-xcomposer2-4khd-7b',])
+except:
+    pass
 
 def get_model_class(model_id: str) -> type[AutoCaptioningModel]:
     lowercase_model_id = model_id.lower()
