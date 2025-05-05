@@ -1,7 +1,7 @@
 from auto_captioning.auto_captioning_model import AutoCaptioningModel
 from auto_captioning.models.cog import Cogagent, Cogvlm
 from auto_captioning.models.cogvlm2 import Cogvlm2
-from auto_captioning.models.florence_2 import Florence2, Florence2Promptgen
+from auto_captioning.models.florence_2 import Florence2, Florence2Promptgen, Furrence2
 from auto_captioning.models.joycaption import Joycaption
 from auto_captioning.models.kosmos_2 import Kosmos2
 from auto_captioning.models.llava_1_point_5 import Llava1Point5
@@ -81,6 +81,8 @@ def get_model_class(model_id: str) -> type[AutoCaptioningModel]:
         if 'promptgen' in lowercase_model_id:
             return Florence2Promptgen
         return Florence2
+    if 'furrence' in lowercase_model_id:
+        return Furrence2
     if 'joycaption' in lowercase_model_id:
         return Joycaption
     if 'kosmos' in lowercase_model_id:
