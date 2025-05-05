@@ -1,3 +1,6 @@
+This fork just includes a merge of changes from some open pull requests (mainly crop editor) on the original repo because i wanted to try them out and maybe make some changes myself 
+
+
 # TagGUI
 
 <img src='images/icon.png' alt='TagGUI icon' width='128'>
