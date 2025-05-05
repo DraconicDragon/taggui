@@ -296,7 +296,7 @@ class AutoMarkings(QDockWidget):
         selected_image_count = len(selected_image_indices)
         self.image_list_model.add_to_undo_stack(
             action_name=f'Generate '
-                        f'{pluralize('Marking', selected_image_count)}',
+                        f"{pluralize('Marking', selected_image_count)}",
             should_ask_for_confirmation=selected_image_count > 1)
         if selected_image_count > 1:
             confirmation_dialog = CaptionMultipleImagesDialog(

@@ -53,7 +53,7 @@ class ModelThread(QThread):
             print(self.error_message)
             return
         if self.is_canceled:
-            print(f'Canceled {self.text['generating']}.')
+            print(f"Canceled {self.text['generating']}.")
             return
         self.clear_console_text_edit_requested.emit()
         selected_image_count = len(self.selected_image_indices)
@@ -65,7 +65,7 @@ class ModelThread(QThread):
         for i, image_index in enumerate(self.selected_image_indices):
             start_time = perf_counter()
             if self.is_canceled:
-                print(f'Canceled {self.text['generating']}.')
+                print(f"Canceled {self.text['generating']}.")
                 return
             image: Image = self.image_list_model.data(image_index,
                                                       Qt.ItemDataRole.UserRole)
@@ -90,7 +90,7 @@ class ModelThread(QThread):
                                          .total_seconds())
             average_generating_duration = (total_generating_duration /
                                            selected_image_count)
-            print(f'Finished {self.text['generating']} {selected_image_count} images in '
+            print(f"Finished {self.text['generating']} {selected_image_count} images in "
                   f'{format_duration(total_generating_duration)} '
                   f'({average_generating_duration:.1f} s/image) at '
                   f'{generating_end_datetime.strftime("%Y-%m-%d %H:%M:%S")}.')
@@ -105,9 +105,9 @@ class ModelThread(QThread):
         if are_multiple_images_selected:
             generating_start_datetime_string = (
                 generating_start_datetime.strftime('%Y-%m-%d %H:%M:%S'))
-            return (f'{self.text['Generating']}... (device: {self.device}, '
+            return (f"{self.text['Generating']}... (device: {self.device}, "
                     f'start time: {generating_start_datetime_string})')
-        return f'{self.text['Generating']}... (device: {self.device})'
+        return f"{self.text['Generating']}... (device: {self.device})"
 
     @abstractmethod
     def get_model_inputs(self, image: Image) -> tuple[

@@ -21,12 +21,12 @@ def suppress_warnings():
     logging.basicConfig(level=logging.ERROR)
     warnings.simplefilter('ignore')
     transformers.logging.set_verbosity_error()
-    try:
-        import auto_gptq
-        auto_gptq_logger = logging.getLogger(auto_gptq.modeling._base.__name__)
-        auto_gptq_logger.setLevel(logging.ERROR)
-    except ImportError:
-        pass
+    # try:
+    #     import auto_gptq
+    #     auto_gptq_logger = logging.getLogger(auto_gptq.modeling._base.__name__)
+    #     auto_gptq_logger.setLevel(logging.ERROR)
+    # except ImportError:
+    #     pass
 
 
 def run_gui():
