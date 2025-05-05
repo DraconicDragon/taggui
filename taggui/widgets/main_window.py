@@ -615,7 +615,7 @@ class MainWindow(QMainWindow):
         if event is not None and (event.modifiers() & Qt.ControlModifier) == Qt.ControlModifier:
             # don't set the image but instead the filter
             is_shift = (event.modifiers() & Qt.ShiftModifier) == Qt.ShiftModifier
-            stars = f'stars:{'>=' if is_shift else '='}{round(rating*5)}'
+            stars = f"stars:{'>=' if is_shift else '='}{round(rating * 5)}"
             self.image_list.filter_line_edit.setText(stars)
             return
 
