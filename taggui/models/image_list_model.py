@@ -212,9 +212,8 @@ class ImageListModel(QAbstractListModel):
                                                   confidence=marking.get('confidence', 1.0))
                                 image.markings.append(marking)
                     else:
-                        error_messages.append(f'Invalid version '
-                                              f'"{meta.get('version')}" in '
-                                              f'"{json_file_path}"')
+                        version = meta.get("version")
+                        error_messages.append(f'Invalid version "{version}" in "{json_file_path}"')
             self.images.append(image)
         self.images.sort(key=lambda image_: image_.path)
         self.modelReset.emit()
