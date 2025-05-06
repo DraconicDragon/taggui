@@ -55,6 +55,8 @@ class CaptionSettingsForm(QVBoxLayout):
             self.is_bitsandbytes_available = True
         except RuntimeError:
             self.is_bitsandbytes_available = False
+            
+# region basic settings
         basic_settings_form = QFormLayout()
         basic_settings_form.setRowWrapPolicy(
             QFormLayout.RowWrapPolicy.WrapAllRows)
@@ -128,7 +130,9 @@ class CaptionSettingsForm(QVBoxLayout):
         basic_settings_form.addRow(self.load_in_4_bit_container)
         basic_settings_form.addRow(self.remove_tag_separators_container)
         basic_settings_form.addRow(self.limit_to_crop_container)
+# endregion
 
+# region wd_tagger
         self.wd_tagger_settings_form_container = QWidget()
         wd_tagger_settings_form = QFormLayout(
             self.wd_tagger_settings_form_container)
@@ -159,7 +163,9 @@ class CaptionSettingsForm(QVBoxLayout):
                                        self.min_probability_spin_box)
         wd_tagger_settings_form.addRow('Maximum tags', self.max_tags_spin_box)
         wd_tagger_settings_form.addRow(tags_to_exclude_form)
+# endregion
 
+# region adv. toggle
         self.toggle_advanced_settings_form_button = TallPushButton(
             'Show Advanced Settings')
 
@@ -232,6 +238,7 @@ class CaptionSettingsForm(QVBoxLayout):
         advanced_settings_form.addRow(HorizontalLine())
         advanced_settings_form.addRow('GPU index', self.gpu_index_spin_box)
         self.advanced_settings_form_container.hide()
+# endregion
 
         self.addLayout(basic_settings_form)
         self.addWidget(self.wd_tagger_settings_form_container)
