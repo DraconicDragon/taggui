@@ -77,7 +77,7 @@ class CaptionSettingsForm(QVBoxLayout):
         # WD Tagger for grounding group
         self.wd_tagger_group = QWidget()
         wd_tagger_layout = QFormLayout(self.wd_tagger_group)
-        wd_tagger_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
+        wd_tagger_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
 
         self.use_wd_tagger_checkbox = SettingsBigCheckBox(
             key='use_wd_tagger_for_furrence', default=True)
@@ -90,21 +90,7 @@ class CaptionSettingsForm(QVBoxLayout):
                                self.use_wd_tagger_checkbox)
         wd_tagger_layout.addRow('Grounding Model:', self.wd_tagger_model_combo)
         
-        # Add WD Tagger settings
-        self.show_probabilities_check_box = SettingsBigCheckBox(
-            key='wd_tagger_show_probabilities', default=True)
-        self.min_probability_spin_box = FocusedScrollSettingsDoubleSpinBox(
-            key='wd_tagger_min_probability', default=0.4, minimum=0.01,
-            maximum=1)
-        self.min_probability_spin_box.setSingleStep(0.01)
-        self.max_tags_spin_box = FocusedScrollSettingsSpinBox(
-            key='wd_tagger_max_tags', default=30, minimum=1, maximum=999)
-        
-        wd_tagger_layout.addRow('Show probabilities',
-                               self.show_probabilities_check_box)
-        wd_tagger_layout.addRow('Minimum probability',
-                               self.min_probability_spin_box)
-        wd_tagger_layout.addRow('Maximum tags', self.max_tags_spin_box)
+
         
         furrence_layout.addWidget(self.wd_tagger_group)
         self.furrence_settings_container.hide()
@@ -132,7 +118,7 @@ class CaptionSettingsForm(QVBoxLayout):
         load_in_4_bit_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         load_in_4_bit_layout.setContentsMargins(0, 0, 0, 0)
         self.load_in_4_bit_check_box = SettingsBigCheckBox(
-            key='load_in_4_bit', default=True)
+            key='load_in_4_bit', default=False) # todo: normal is True
         load_in_4_bit_layout.addWidget(QLabel('Load in 4-bit'))
         load_in_4_bit_layout.addWidget(self.load_in_4_bit_check_box)
         self.load_in_4_bit_container.setLayout(load_in_4_bit_layout)
