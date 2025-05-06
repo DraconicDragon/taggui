@@ -62,12 +62,36 @@ class CaptionSettingsForm(QVBoxLayout):
             QFormLayout.RowWrapPolicy.WrapAllRows)
         basic_settings_form.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        
+        # Add Furrence-specific controls
+        self.furrence_container = QWidget()
+        furrence_layout = QHBoxLayout(self.furrence_container)
+        furrence_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        furrence_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.use_wd_tagger_checkbox = SettingsBigCheckBox(
+            key='use_wd_tagger_for_furrence', default=True)
+        self.wd_tagger_model_combo = FocusedScrollSettingsComboBox(
+            key='furrence_wd_tagger_model')
+        self.wd_tagger_model_combo.addItems(self.get_local_model_paths())
+        self.wd_tagger_model_combo.addItems(MODELS)
+        
+        furrence_layout.addWidget(QLabel('Use WD Tagger for grounding:'))
+        furrence_layout.addWidget(self.use_wd_tagger_checkbox)
+        furrence_layout.addWidget(QLabel('WD Tagger Model:'))
+        furrence_layout.addWidget(self.wd_tagger_model_combo)
+        self.furrence_container.hide()
+        
         self.model_combo_box = FocusedScrollSettingsComboBox(key='model_id')
         # `setEditable()` must be called before `addItems()` to preserve any
         # custom model that was set.
         self.model_combo_box.setEditable(True)
         self.model_combo_box.addItems(self.get_local_model_paths())
         self.model_combo_box.addItems(MODELS)
+        
+        basic_settings_form.addRow('Model', self.model_combo_box)
+        basic_settings_form.addRow(self.furrence_container)
+        
         self.prompt_text_edit = SettingsPlainTextEdit(key='prompt')
         set_text_edit_height(self.prompt_text_edit, 4)
         self.caption_start_line_edit = SettingsLineEdit(key='caption_start')
@@ -289,6 +313,13 @@ class CaptionSettingsForm(QVBoxLayout):
 
     @Slot(str)
     def show_settings_for_model(self, model_id: str):
+        is_furrence_model = "furrence" in model_id.lower()
+        is_wd_tagger_model = get_model_class(model_id) == WdTagger
+        
+        # Show/hide Furrence-specific controls
+        self.furrence_container.setVisible(is_furrence_model)
+        
+        # Existing WD Tagger visibility logic
         wd_tagger_widgets = [self.wd_tagger_settings_form_container]
         non_wd_tagger_widgets = [
             self.prompt_label,
@@ -304,11 +335,12 @@ class CaptionSettingsForm(QVBoxLayout):
             self.toggle_advanced_settings_form_button,
             self.advanced_settings_form_container
         ]
-        is_wd_tagger_model = get_model_class(model_id) == WdTagger
+        
         for widget in wd_tagger_widgets:
             widget.setVisible(is_wd_tagger_model)
         for widget in non_wd_tagger_widgets:
-            widget.setVisible(not is_wd_tagger_model)
+            widget.setVisible(not is_wd_tagger_model and not is_furrence_model)
+            
         self.set_load_in_4_bit_visibility(self.device_combo_box.currentText())
 
     @Slot(str)
@@ -334,7 +366,7 @@ class CaptionSettingsForm(QVBoxLayout):
                 'Show Advanced Settings')
 
     def get_caption_settings(self) -> dict:
-        return {
+        settings = {
             'model_id': self.model_combo_box.currentText(),
             'prompt': self.prompt_text_edit.toPlainText(),
             'skip_hash': self.skip_hash_check_box.isChecked(),
@@ -368,9 +400,22 @@ class CaptionSettingsForm(QVBoxLayout):
                 'max_tags': self.max_tags_spin_box.value(),
                 'tags_to_exclude':
                     self.tags_to_exclude_text_edit.toPlainText()
+            },
+            # Add Furrence-specific settings
+            'furrence_settings': {
+                'use_wd_tagger': self.use_wd_tagger_checkbox.isChecked(),
+                'wd_tagger_model': self.wd_tagger_model_combo.currentText(),
+                'wd_tagger_settings': {
+                    'show_probabilities':
+                        self.show_probabilities_check_box.isChecked(),
+                    'min_probability': self.min_probability_spin_box.value(),
+                    'max_tags': self.max_tags_spin_box.value(),
+                    'tags_to_exclude':
+                        self.tags_to_exclude_text_edit.toPlainText()
+                }
             }
         }
-
+        return settings
 
 @Slot()
 def restore_stdout_and_stderr():
@@ -498,26 +543,42 @@ class AutoCaptioner(QDockWidget):
                 return
             show_alert_when_finished = (confirmation_dialog
                                         .show_alert_check_box.isChecked())
+        
         self.set_is_captioning(True)
         caption_settings = self.caption_settings_form.get_caption_settings()
+        
+        # Check if this is a Furrence model
+        is_furrence_model = "furrence" in caption_settings['model_id'].lower()
+        use_wd_tagger = (is_furrence_model and 
+                         caption_settings['furrence_settings']['use_wd_tagger'])
+        
         if caption_settings['caption_position'] != CaptionPosition.DO_NOT_ADD:
             self.image_list_model.add_to_undo_stack(
                 action_name=f'Generate '
                             f'{pluralize("Caption", selected_image_count)}',
                 should_ask_for_confirmation=selected_image_count > 1)
+        
         if selected_image_count > 1:
             self.progress_bar.setRange(0, selected_image_count)
             self.progress_bar.setValue(0)
             self.progress_bar.show()
+            
         tag_separator = get_tag_separator()
         models_directory_path = settings.value(
             'models_directory_path',
             defaultValue=DEFAULT_SETTINGS['models_directory_path'], type=str)
         models_directory_path = (Path(models_directory_path)
                                  if models_directory_path else None)
+                # Create the captioning thread with appropriate settings
         self.captioning_thread = CaptioningThread(
             self, self.image_list_model, selected_image_indices,
-            caption_settings, tag_separator, models_directory_path)
+            caption_settings, tag_separator, models_directory_path,
+            #is_furrence_model=is_furrence_model,
+            #use_wd_tagger=use_wd_tagger,
+            )
+        # self.captioning_thread = CaptioningThread(
+        #     self, self.image_list_model, selected_image_indices,
+        #     caption_settings, tag_separator, models_directory_path)
         self.captioning_thread.text_outputted.connect(
             self.update_console_text_edit)
         self.captioning_thread.clear_console_text_edit_requested.connect(
