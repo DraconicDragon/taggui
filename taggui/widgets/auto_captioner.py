@@ -63,12 +63,22 @@ class CaptionSettingsForm(QVBoxLayout):
         basic_settings_form.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         
-        # Add Furrence-specific controls
-        self.furrence_container = QWidget()
-        furrence_layout = QHBoxLayout(self.furrence_container)
-        furrence_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # Model selection
+        self.model_combo_box = FocusedScrollSettingsComboBox(key='model_id')
+        self.model_combo_box.setEditable(True)
+        self.model_combo_box.addItems(self.get_local_model_paths())
+        self.model_combo_box.addItems(MODELS)
+        
+        # Furrence-specific settings
+        self.furrence_settings_container = QWidget()
+        furrence_layout = QVBoxLayout(self.furrence_settings_container)
         furrence_layout.setContentsMargins(0, 0, 0, 0)
         
+        # WD Tagger for grounding group
+        self.wd_tagger_group = QWidget()
+        wd_tagger_layout = QFormLayout(self.wd_tagger_group)
+        wd_tagger_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
+
         self.use_wd_tagger_checkbox = SettingsBigCheckBox(
             key='use_wd_tagger_for_furrence', default=True)
         self.wd_tagger_model_combo = FocusedScrollSettingsComboBox(
@@ -76,22 +86,29 @@ class CaptionSettingsForm(QVBoxLayout):
         self.wd_tagger_model_combo.addItems(self.get_local_model_paths())
         self.wd_tagger_model_combo.addItems(MODELS)
         
-        furrence_layout.addWidget(QLabel('Use WD Tagger for grounding:'))
-        furrence_layout.addWidget(self.use_wd_tagger_checkbox)
-        furrence_layout.addWidget(QLabel('WD Tagger Model:'))
-        furrence_layout.addWidget(self.wd_tagger_model_combo)
-        self.furrence_container.hide()
+        wd_tagger_layout.addRow('Use WD Tagger for grounding:', 
+                               self.use_wd_tagger_checkbox)
+        wd_tagger_layout.addRow('Grounding Model:', self.wd_tagger_model_combo)
         
-        self.model_combo_box = FocusedScrollSettingsComboBox(key='model_id')
-        # `setEditable()` must be called before `addItems()` to preserve any
-        # custom model that was set.
-        self.model_combo_box.setEditable(True)
-        self.model_combo_box.addItems(self.get_local_model_paths())
-        self.model_combo_box.addItems(MODELS)
+        # Add WD Tagger settings
+        self.show_probabilities_check_box = SettingsBigCheckBox(
+            key='wd_tagger_show_probabilities', default=True)
+        self.min_probability_spin_box = FocusedScrollSettingsDoubleSpinBox(
+            key='wd_tagger_min_probability', default=0.4, minimum=0.01,
+            maximum=1)
+        self.min_probability_spin_box.setSingleStep(0.01)
+        self.max_tags_spin_box = FocusedScrollSettingsSpinBox(
+            key='wd_tagger_max_tags', default=30, minimum=1, maximum=999)
         
-        basic_settings_form.addRow('Model', self.model_combo_box)
-        basic_settings_form.addRow(self.furrence_container)
+        wd_tagger_layout.addRow('Show probabilities',
+                               self.show_probabilities_check_box)
+        wd_tagger_layout.addRow('Minimum probability',
+                               self.min_probability_spin_box)
+        wd_tagger_layout.addRow('Maximum tags', self.max_tags_spin_box)
         
+        furrence_layout.addWidget(self.wd_tagger_group)
+        self.furrence_settings_container.hide()
+        # Standard captioning controls
         self.prompt_text_edit = SettingsPlainTextEdit(key='prompt')
         set_text_edit_height(self.prompt_text_edit, 4)
         self.caption_start_line_edit = SettingsLineEdit(key='caption_start')
@@ -140,21 +157,21 @@ class CaptionSettingsForm(QVBoxLayout):
         remove_tag_separators_layout.addWidget(remove_tag_separators_label)
         remove_tag_separators_layout.addWidget(
             self.remove_tag_separators_check_box)
+        
+        # Add all basic settings to form
         basic_settings_form.addRow('Model', self.model_combo_box)
-        self.prompt_label = QLabel('Prompt')
-        basic_settings_form.addRow(self.prompt_label, self.prompt_text_edit)
-        self.caption_start_label = QLabel('Start caption with')
-        basic_settings_form.addRow(self.caption_start_label,
-                                   self.caption_start_line_edit)
+        basic_settings_form.addRow(self.furrence_settings_container)
+        basic_settings_form.addRow('Prompt', self.prompt_text_edit)
+        basic_settings_form.addRow('Start caption with',
+                                 self.caption_start_line_edit)
         basic_settings_form.addRow('Caption position',
-                                   self.caption_position_combo_box)
+                                 self.caption_position_combo_box)
         basic_settings_form.addRow(self.skip_hash_container)
-        self.device_label = QLabel('Device')
-        basic_settings_form.addRow(self.device_label, self.device_combo_box)
+        basic_settings_form.addRow('Device', self.device_combo_box)
         basic_settings_form.addRow(self.load_in_4_bit_container)
         basic_settings_form.addRow(self.remove_tag_separators_container)
         basic_settings_form.addRow(self.limit_to_crop_container)
-# endregion
+        # endregion
 
 # region wd_tagger
         self.wd_tagger_settings_form_container = QWidget()
@@ -316,30 +333,26 @@ class CaptionSettingsForm(QVBoxLayout):
         is_furrence_model = "furrence" in model_id.lower()
         is_wd_tagger_model = get_model_class(model_id) == WdTagger
         
-        # Show/hide Furrence-specific controls
-        self.furrence_container.setVisible(is_furrence_model)
+        # Show/hide appropriate controls
+        self.furrence_settings_container.setVisible(is_furrence_model)
         
-        # Existing WD Tagger visibility logic
-        wd_tagger_widgets = [self.wd_tagger_settings_form_container]
-        non_wd_tagger_widgets = [
-            self.prompt_label,
+        # Standard controls visibility
+        standard_controls = [
             self.prompt_text_edit,
-            self.skip_hash_container,
-            self.caption_start_label,
             self.caption_start_line_edit,
-            self.device_label,
+            self.caption_position_combo_box,
+            self.skip_hash_container,
             self.device_combo_box,
             self.load_in_4_bit_container,
+            self.limit_to_crop_container,
             self.remove_tag_separators_container,
             self.horizontal_line,
             self.toggle_advanced_settings_form_button,
             self.advanced_settings_form_container
         ]
         
-        for widget in wd_tagger_widgets:
-            widget.setVisible(is_wd_tagger_model)
-        for widget in non_wd_tagger_widgets:
-            widget.setVisible(not is_wd_tagger_model and not is_furrence_model)
+        for control in standard_controls:
+            control.setVisible(not is_wd_tagger_model)
             
         self.set_load_in_4_bit_visibility(self.device_combo_box.currentText())
 
@@ -473,6 +486,7 @@ class AutoCaptioner(QDockWidget):
 
         self.start_cancel_button.clicked.connect(
             self.start_or_cancel_captioning)
+        
 
     @Slot()
     def start_or_cancel_captioning(self):
@@ -571,11 +585,13 @@ class AutoCaptioner(QDockWidget):
                                  if models_directory_path else None)
                 # Create the captioning thread with appropriate settings
         self.captioning_thread = CaptioningThread(
-            self, self.image_list_model, selected_image_indices,
-            caption_settings, tag_separator, models_directory_path,
-            #is_furrence_model=is_furrence_model,
-            #use_wd_tagger=use_wd_tagger,
-            )
+            self, 
+            self.image_list_model, 
+            selected_image_indices,
+            caption_settings, 
+            tag_separator, 
+            models_directory_path
+        )
         # self.captioning_thread = CaptioningThread(
         #     self, self.image_list_model, selected_image_indices,
         #     caption_settings, tag_separator, models_directory_path)
@@ -600,3 +616,16 @@ class AutoCaptioner(QDockWidget):
         sys.stdout = self.captioning_thread
         sys.stderr = self.captioning_thread
         self.captioning_thread.start()
+        
+        self.captioning_thread.show_tags_popup.connect(self.show_tags_popup)
+
+    @Slot(str)
+    def show_tags_popup(self, tags: str):
+        """Show a popup with the generated tags"""
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setWindowTitle("WD Tagger Results")
+        msg.setText("Generated grounding tags:")
+        msg.setDetailedText(tags)
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec()

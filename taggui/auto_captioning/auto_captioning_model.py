@@ -75,6 +75,7 @@ class AutoCaptioningModel:
         self.processor = None
         self.model = None
         self.tokenizer = None
+        self.grounding_tags = None
 
     def get_device(self) -> torch.device:
         if (self.device_setting == CaptionDevice.GPU
@@ -309,3 +310,7 @@ class AutoCaptioningModel:
                                                          image_prompt)
         console_output_caption = caption
         return caption, console_output_caption
+
+    def set_grounding_tags(self, tags: str):
+        """Set the grounding tags from WD Tagger"""
+        self.grounding_tags = tags

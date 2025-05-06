@@ -50,6 +50,14 @@ class Furrence2(Florence2):
     ]
     default_prompt = task_prompts[0]
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grounding_tags = None
+    
+    def set_grounding_tags(self, tags: str):
+        """Set the grounding tags from WD Tagger"""
+        self.grounding_tags = tags
+    
     def get_model_load_arguments(self) -> dict:
         arguments = {
             'trust_remote_code': True,
@@ -90,4 +98,19 @@ class Furrence2(Florence2):
             if name == "pixel_values":
                 tensor = tensor.to(dtype=self.dtype)
             model_inputs[name] = tensor
+        
+        # Add grounding tags if available
+        if self.grounding_tags:
+            model_inputs['grounding_tags'] = self.grounding_tags
+        
         return model_inputs
+    
+    def generate_caption(self, model_inputs: BatchFeature | dict | np.ndarray,
+                         image_prompt: str) -> tuple[str, str]:
+        # Pre-process with grounding tags if available
+        if hasattr(self, 'grounding_tags') and self.grounding_tags:
+            # Add any Furrence-specific grounding processing here
+            pass
+            
+        # Then call the parent's generate_caption
+        return super().generate_caption(model_inputs, image_prompt)
