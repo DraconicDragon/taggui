@@ -117,31 +117,20 @@ class CaptioningThread(ModelThread):
 
     def process_image(self, image_index, image: Image):
         try:
-            # Step 1: Run WD Tagger if enabled
             grounding_tags = None
-            if self.is_furrence_model and self.use_wd_tagger and self.wd_tagger_model:
-                _, wd_tagger_inputs = self.wd_tagger_model.get_model_inputs(image)
-                grounding_tags, _ = self.wd_tagger_model.generate_caption(wd_tagger_inputs, None)
+            # Run WD Tagger first if enabled
+            if self.use_wd_tagger and self.wd_tagger_model:
+                model_inputs = self.wd_tagger_model.get_model_inputs(None, image, False)
+                grounding_tags, _ = self.wd_tagger_model.generate_caption(model_inputs, None)
                 
-                # Pass tags to Furrence2
-                if hasattr(self.model, 'set_grounding_tags'):
+                if grounding_tags and hasattr(self.model, 'set_grounding_tags'):
                     self.model.set_grounding_tags(grounding_tags)
-                
-                # Show popup with tags
-                self.show_tags_popup.emit(grounding_tags)  # Add this signal to the class
 
-            # Step 2: Prepare inputs for main model
+            # Then run main model
             image_prompt, model_inputs = self.get_model_inputs(image)
-            
-            # Step 3: Add grounding tags to inputs if available
-            if grounding_tags and hasattr(self.model, 'set_grounding_tags'):
-                self.model.set_grounding_tags(grounding_tags)
-            
-            # Step 4: Generate caption with main model
-            self.write(f"Generating caption for image {image_index.row()+1}...")
             caption, console_output = self.generate_output(image_index, image, image_prompt, model_inputs)
-            
             return True
+
         except Exception as e:
             self.error_message = str(e)
             self.is_error = True

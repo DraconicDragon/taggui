@@ -84,26 +84,18 @@ class Furrence2(Florence2):
         model.eval()
         return model
 
-    def get_model_inputs(self, image_prompt: str, image: Image,
-                        crop: bool) -> BatchFeature | dict | np.ndarray:
-        text = self.get_input_text(image_prompt)
-        pil_image = self.load_image(image, crop)
-        raw_inputs = self.processor(
-            text=text, images=pil_image, return_tensors='pt'
-        ).to(self.device)  # Move all inputs to the device at once
+    def get_model_inputs(self, image_prompt: str, image: Image, crop: bool):
+        inputs = super().get_model_inputs(image_prompt, image, crop)
         
-        model_inputs = {}
-        for name, tensor in raw_inputs.items():
-            # Cast the image pixels to float16 if needed
-            if name == "pixel_values":
-                tensor = tensor.to(dtype=self.dtype)
-            model_inputs[name] = tensor
-        
-        # Add grounding tags if available
         if self.grounding_tags:
-            model_inputs['grounding_tags'] = self.grounding_tags
+            # Append grounding tags to the text input
+            inputs['input_ids'] = self.processor(
+                text=f"{inputs['input_ids']} {self.grounding_tags}",
+                images=inputs['pixel_values'],
+                return_tensors='pt'
+            ).input_ids.to(self.device)
         
-        return model_inputs
+        return inputs
     
     def generate_caption(self, model_inputs: BatchFeature | dict | np.ndarray,
                          image_prompt: str) -> tuple[str, str]:

@@ -322,7 +322,12 @@ class CaptionSettingsForm(QVBoxLayout):
         # Show/hide appropriate controls
         self.furrence_settings_container.setVisible(is_furrence_model)
         
+        # Always show WD Tagger group for Furrence models
+        self.wd_tagger_settings_form_container.setVisible(is_furrence_model)
+        self.furrence_settings_container.setVisible(is_furrence_model)
+        
         # Standard controls visibility
+        show_standard_controls = not is_wd_tagger_model
         standard_controls = [
             self.prompt_text_edit,
             self.caption_start_line_edit,
@@ -338,8 +343,9 @@ class CaptionSettingsForm(QVBoxLayout):
         ]
         
         for control in standard_controls:
-            control.setVisible(not is_wd_tagger_model)
+            control.setVisible(show_standard_controls)
             
+        self.toggle_advanced_settings_form_button.setVisible(not is_wd_tagger_model)
         self.set_load_in_4_bit_visibility(self.device_combo_box.currentText())
 
     @Slot(str)
@@ -405,12 +411,10 @@ class CaptionSettingsForm(QVBoxLayout):
                 'use_wd_tagger': self.use_wd_tagger_checkbox.isChecked(),
                 'wd_tagger_model': self.wd_tagger_model_combo.currentText(),
                 'wd_tagger_settings': {
-                    'show_probabilities':
-                        self.show_probabilities_check_box.isChecked(),
+                    'show_probabilities': self.show_probabilities_check_box.isChecked(),
                     'min_probability': self.min_probability_spin_box.value(),
                     'max_tags': self.max_tags_spin_box.value(),
-                    'tags_to_exclude':
-                        self.tags_to_exclude_text_edit.toPlainText()
+                    'tags_to_exclude': self.tags_to_exclude_text_edit.toPlainText()
                 }
             }
         }
